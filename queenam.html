@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tính Tỷ Lệ Còn Lại</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            background-color: #f9f9f9;
+        }
+        input {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        button {
+            padding: 10px 20px;
+            background-color: #28a745;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #218838;
+        }
+        .result {
+            margin-top: 20px;
+            font-size: 1.2em;
+            color: #333;
+        }
+        .additional-result {
+            margin-top: 10px;
+            font-size: 1em;
+            color: red;
+        }
+        .threshold-result {
+            margin-top: 10px;
+            font-size: 1em;
+            color: red;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Tính Tỷ Lệ Còn Lại</h1>
+        <label for="nsx">Ngày sản xuất (dd/mm/yyyy):</label>
+        <input type="text" id="nsx" placeholder="dd/mm/yyyy">
+
+        <label for="hsd">Hạn sử dụng (dd/mm/yyyy):</label>
+        <input type="text" id="hsd" placeholder="dd/mm/yyyy">
+
+        <label for="today">Ngày hôm nay (dd/mm/yyyy):</label>
+        <input type="text" id="today" value="31/12/2024" placeholder="dd/mm/yyyy">
+
+        <button onclick="calculatePercentage()">Tính</button>
+
+        <div class="result" id="result"></div>
+        <div class="additional-result" id="additional-result"></div>
+        <div class="threshold-result" id="threshold-result"></div>
+    </div>
+
+    <script>
+        function parseDate(input) {
+            const parts = input.split('/');
+            return new Date(parts[2], parts[1] - 1, parts[0]);
+        }
+
+        function calculatePercentage() {
+            const nsxInput = document.getElementById('nsx').value;
+            const hsdInput = document.getElementById('hsd').value;
+            const todayInput = document.getElementById('today').value;
+
+            if (!nsxInput || !hsdInput || !todayInput) {
+                document.getElementById('result').textContent = "Vui lòng nhập đủ thông tin ngày tháng!";
+                document.getElementById('additional-result').textContent = "";
+                document.getElementById('threshold-result').textContent = "";
+                return;
+            }
+
+            const nsx = parseDate(nsxInput);
+            const hsd = parseDate(hsdInput);
+            const today = parseDate(todayInput);
+
+            if (isNaN(nsx) || isNaN(hsd) || isNaN(today)) {
+                document.getElementById('result').textContent = "Định dạng ngày không hợp lệ! Vui lòng nhập theo dd/mm/yyyy.";
+                document.getElementById('additional-result').textContent = "";
+                document.getElementById('threshold-result').textContent = "";
+                return;
+            }
+
+            let yearDiff = hsd.getFullYear() - nsx.getFullYear();
+            let monthDiff = hsd.getMonth() - nsx.getMonth();
+            let dayDiff = hsd.getDate() - nsx.getDate();
+
+            if (dayDiff < 0) {
+                monthDiff -= 1;
+                const previousMonth = new Date(hsd.getFullYear(), hsd.getMonth(), 0);
+                dayDiff += previousMonth.getDate();
+            }
+
+            if (monthDiff < 0) {
+                yearDiff -= 1;
+                monthDiff += 12;
+            }
+
+            const totalMonths = yearDiff * 12 + monthDiff;
+
+            // Trừ hao 7 ngày
+            const adjustedMonths = totalMonths + (dayDiff >= 24 ? 1 : 0);
+            const divisorMonths = adjustedMonths >= 18 ? 18 : 12;
+
+            const daysRemaining = Math.floor((hsd - today) / (1000 * 60 * 60 * 24));
+            const percentage = (daysRemaining / (divisorMonths * 30)) * 100;
+
+            document.getElementById('result').textContent =
+                `Tỷ lệ còn lại: ${percentage.toFixed(2)}%`;
+
+            document.getElementById('additional-result').textContent =
+                `Hạn sử dụng - ngày sản xuất: ${totalMonths} tháng ${dayDiff} ngày`;
+
+            const thresholdText = adjustedMonths >= 18
+                ? ">= 18 tháng"
+                : "< 18 tháng";
+
+            document.getElementById('threshold-result').textContent = thresholdText;
+        }
+    </script>
+</body>
+</html>
